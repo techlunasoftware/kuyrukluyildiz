@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TechLuna Kuyruklu Yıldızı</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background-color: #000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+        }
+
+        body::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 200%;
+            background: 
+                radial-gradient(circle at 10% 20%, rgba(120, 50, 200, 0.3), transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(50, 100, 200, 0.25), transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(20, 20, 60, 0.4), transparent 50%);
+            z-index: 0; pointer-events: none;
+            animation: slowDrift 120s linear infinite;
+        }
+        @keyframes slowDrift { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
+
+        #star-field { position: fixed; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+        .star {
+            position: absolute; background: white; border-radius: 50%;
+            animation: twinkle var(--twinkle-dur) infinite alternate ease-in-out;
+            box-shadow: 0 0 4px rgba(255,255,255,0.8);
+        }
+        .star.large { box-shadow: 0 0 10px rgba(255,255,255,1); }
+        @keyframes twinkle { 0% { opacity: 0.4; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.2); } }
+
+        .planet-wrapper {
+            position: absolute; 
+            z-index: 10;
+            display: flex; align-items: center; justify-content: center;
+            animation: float 10s ease-in-out infinite;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            transition: transform 0.3s ease;
+        }
+        .planet-wrapper:hover { transform: translateY(-10px); z-index: 100; }
+        .planet-wrapper:hover .planet-body { 
+            transform: scale(1.15); 
+            filter: brightness(1.3) saturate(1.2);
+            box-shadow: 0 0 60px rgba(100, 150, 255, 0.6);
+        }
+
+        @keyframes float { 
+            0%, 100% { transform: translateY(0) rotate(0.5deg); } 
+            50% { transform: translateY(-20px) rotate(-0.5deg); } 
+        }
+
+        .planet-body {
+            width: var(--size); height: var(--size);
+            border-radius: 50%;
+            position: relative;
+            transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+            overflow: hidden;
+            background: #000;
+            box-shadow: 
+                0 0 40px rgba(0,0,0,0.8),
+                inset -30px -30px 60px rgba(0,0,0,0.9),
+                inset 10px 10px 20px rgba(255,255,255,0.1);
+        }
+
+        .layer-surface {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background-size: 220% 100%;
+            animation: spinPlanet var(--spin-speed) linear infinite;
+        }
+
+        .layer-clouds {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background-size: 220% 100%;
+            opacity: 0.7;
+            mix-blend-mode: screen;
+            animation: spinPlanet var(--cloud-speed) linear infinite;
+        }
+
+        .layer-atmosphere {
+            position: absolute; top: -10%; left: -10%; width: 120%; height: 120%;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--glow) 0%, transparent 70%);
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .layer-lighting {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 50%, rgba(0,0,0,0.8) 100%);
+            mix-blend-mode: overlay;
+            pointer-events: none;
+        }
+
+        @keyframes spinPlanet {
+            0% { background-position: 0% 0%; }
+            100% { background-position: -220% 0%; }
+        }
+
+        .planet-ring {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotateX(78deg) rotateZ(var(--ring-angle));
+            width: calc(var(--size) * 2.2);
+            height: calc(var(--size) * 2.2);
+            border-radius: 50%;
+            border: calc(var(--size) * 0.08) solid transparent;
+            background: var(--ring-gradient);
+            background-clip: content-box;
+            box-shadow: 0 0 30px var(--ring-shadow), inset 0 0 20px rgba(0,0,0,0.5);
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.9;
+        }
+
+        .planet-ring::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 50%;
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.3);
+        }
+
+        .wish-container {
+            position: fixed; pointer-events: none; z-index: 1000;
+            display: flex; align-items: center; opacity: 0;
+        }
+        .animate-wish { animation: wishFlow 4.5s forwards cubic-bezier(0.2, 0.8, 0.2, 1); }
+        @keyframes wishFlow {
+            0% { opacity: 0; transform: scale(0) translateY(0); }
+            15% { opacity: 1; transform: scale(1.1) translateY(-20px); }
+            40% { opacity: 1; transform: scale(1) translateY(-50px); }
+            100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0.3); }
+        }
+        .wish-star { 
+            width: 14px; height: 14px; background: #fff; border-radius: 50%; 
+            box-shadow: 0 0 25px #0ff; animation: pulse 1.5s infinite alternate; 
+        }
+        @keyframes pulse { 0% { box-shadow: 0 0 15px #0ff; } 100% { box-shadow: 0 0 30px #0ff; } }
+        .wish-text { 
+            margin-left: 18px; color: #fff; font-size: 20px; font-weight: 600; 
+            text-shadow: 0 2px 8px rgba(0,0,0,0.8); letter-spacing: 0.5px;
+        }
+        
+        .hint { 
+            position: absolute; bottom: 30px; width: 100%; text-align: center; 
+            color: rgba(255,255,255,0.5); pointer-events: none; 
+            letter-spacing: 3px; font-size: 13px; text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="star-field"></div>
+    <div id="galaxy"></div>
+    <div class="hint">Bir dünyaya dokunarak dilek tut</div>
+
+    <script>
+        const starField = document.getElementById('star-field');
+        for(let i = 0; i < 500; i++){
+            const s = document.createElement('div');
+            s.className = 'star';
+            if (Math.random() < 0.05) s.classList.add('large');
+            const size = Math.random() * 2.5 + (s.classList.contains('large') ? 2 : 0);
+            s.style.width = size + 'px'; s.style.height = size + 'px';
+            s.style.left = Math.random() * 100 + '%'; 
+            s.style.top = Math.random() * 100 + '%';
+            s.style.setProperty('--twinkle-dur', (Math.random()*4 + 3)+'s');
+            s.style.opacity = Math.random() * 0.8 + 0.2;
+            starField.appendChild(s);
+        }
+
+        const planetTypes = [
+            { name: 'terra',    hasClouds: true,  hasRing: false, glow: 'rgba(50, 150, 255, 0.5)' },
+            { name: 'ocean',   hasClouds: true,  hasRing: false, glow: 'rgba(0, 200, 255, 0.5)' },
+            { name: 'gas-giant', hasClouds: true, hasRing: true,  glow: 'rgba(255, 180, 100, 0.5)' },
+            { name: 'ice-world', hasClouds: true, hasRing: false, glow: 'rgba(100, 220, 255, 0.5)' },
+            { name: 'lava',    hasClouds: false, hasRing: false, glow: 'rgba(255, 80, 0, 0.7)' },
+            { name: 'desert',  hasClouds: true,  hasRing: false, glow: 'rgba(255, 200, 100, 0.4)' },
+            { name: 'ringed-gas', hasClouds: true, hasRing: true, glow: 'rgba(150, 100, 255, 0.5)' },
+            { name: 'exotic',  hasClouds: true,  hasRing: true,  glow: 'rgba(200, 50, 255, 0.6)' }
+        ];
+
+        const isMobile = window.innerWidth < 768;
+        const positions = isMobile ? [
+            {x: 15, y: 12, size: 100},
+            {x: 75, y: 18, size: 120},
+            {x: 40, y: 35, size: 110},
+            {x: 80, y: 45, size: 95},
+            {x: 20, y: 55, size: 105},
+            {x: 60, y: 65, size: 115},
+            {x: 35, y: 78, size: 100},
+            {x: 85, y: 80, size: 90}
+        ] : [
+            {x: 8,  y: 15, size: 140},
+            {x: 28, y: 12, size: 160},
+            {x: 52, y: 20, size: 150},
+            {x: 78, y: 18, size: 135},
+            {x: 15, y: 50, size: 145},
+            {x: 45, y: 55, size: 155},
+            {x: 72, y: 60, size: 140},
+            {x: 30, y: 75, size: 130}
+        ];
+
+        const galaxy = document.getElementById('galaxy');
+
+        planetTypes.forEach((type, i) => {
+            const pos = positions[i];
+            const x = (pos.x / 100) * window.innerWidth;
+            const y = (pos.y / 100) * window.innerHeight;
+            createPlanet(x, y, pos.size, type);
+        });
+
+        function createPlanet(x, y, size, type) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'planet-wrapper';
+            wrapper.style.left = x + 'px';
+            wrapper.style.top = y + 'px';
+            wrapper.style.setProperty('--size', size + 'px');
+
+            const spinSpeed = (Math.random() * 25 + 35) + 's';
+            wrapper.style.setProperty('--spin-speed', spinSpeed);
+            wrapper.style.setProperty('--cloud-speed', (parseFloat(spinSpeed) * 0.75) + 's');
+
+            const body = document.createElement('div');
+            body.className = 'planet-body';
+
+            const surface = document.createElement('div');
+            surface.className = 'layer-surface';
+            surface.style.backgroundImage = generateTexture(type.name);
+            body.appendChild(surface);
+
+            if (type.hasClouds) {
+                const clouds = document.createElement('div');
+                clouds.className = 'layer-clouds';
+                clouds.style.backgroundImage = generateClouds(type.name);
+                body.appendChild(clouds);
+            }
+
+            const lighting = document.createElement('div');
+            lighting.className = 'layer-lighting';
+            body.appendChild(lighting);
+
+            const atmosphere = document.createElement('div');
+            atmosphere.className = 'layer-atmosphere';
+            atmosphere.style.setProperty('--glow', type.glow);
+            body.appendChild(atmosphere);
+            wrapper.appendChild(body);
+
+            if (type.hasRing) {
+                const ring = document.createElement('div');
+                ring.className = 'planet-ring';
+                const ringAngle = Math.random() * 30 - 15 + 'deg';
+                ring.style.setProperty('--ring-angle', ringAngle);
+                ring.style.setProperty('--ring-gradient', generateRingGradient(type.name));
+                ring.style.setProperty('--ring-shadow', type.glow.replace('0.5', '0.3'));
+                wrapper.appendChild(ring);
+            }
+
+            wrapper.onclick = makeWish;
+            wrapper.ontouchstart = (e) => { e.preventDefault(); makeWish(e.touches[0]); };
+            galaxy.appendChild(wrapper);
+        }
+
+        function generateTexture(name) {
+            if (name === 'terra') {
+                return `
+                    radial-gradient(circle at ${r(30,70)}% ${r(30,70)}%, #2e7d32 0%, #4caf50 10%, transparent 30%),
+                    radial-gradient(circle at ${r(20,80)}% ${r(20,80)}%, #a1887f 5%, transparent 25%),
+                    radial-gradient(circle at ${r(40,60)}% ${r(40,60)}%, #fffde7 2%, transparent 20%),
+                    linear-gradient(90deg, #1565c0, #2196f3)
+                `;
+            }
+            if (name === 'ocean') {
+                return `
+                    repeating-linear-gradient(45deg, #01579b 0%, #0288d1 10%, #4fc3f7 20%),
+                    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.2) 0%, transparent 50%)
+                `;
+            }
+            if (name === 'gas-giant' || name === 'ringed-gas') {
+                const h = name === 'gas-giant' ? 30 : 270;
+                return `
+                    repeating-linear-gradient(to bottom,
+                        hsl(${h},60%,60%) 0%, hsl(${h+10},70%,50%) 10%,
+                        hsl(${h},50%,40%) 20%, hsl(${h+20},60%,55%) 30%,
+                        hsl(${h},60%,60%) 40%
+                    ),
+                    radial-gradient(circle at ${r(40,60)}% ${r(40,60)}%, hsl(${h+30},80%,70%) 0%, transparent 15%)
+                `;
+            }
+            if (name === 'ice-world') {
+                return `
+                    conic-gradient(from ${r(0,360)}deg, #e3f2fd, #bbdefb, #90caf9, #64b5f6, #42a5f5),
+                    repeating-radial-gradient(circle, transparent 0%, rgba(255,255,255,0.8) 5%, transparent 10%)
+                `;
+            }
+            if (name === 'lava') {
+                return `
+                    radial-gradient(circle at 50% 50%, #d32f2f 0%, #ef5350 30%, #b71c1c 60%),
+                    repeating-linear-gradient(45deg, #000 0px, #000 2px, #ff5722 2px, #ff5722 4px)
+                `;
+            }
+            if (name === 'desert') {
+                return `
+                    linear-gradient(135deg, #ffecb3 0%, #ffe082 30%, #ffb74d 60%, #ff9800 100%),
+                    radial-gradient(ellipse at ${r(20,80)}% ${r(20,80)}%, rgba(121,85,72,0.5) 0%, transparent 40%)
+                `;
+            }
+            if (name === 'exotic') {
+                return `
+                    radial-gradient(circle at 40% 40%, #e91e63 0%, #9c27b0 30%, #673ab7 60%, #3f51b5 100%),
+                    radial-gradient(circle at 70% 70%, rgba(0,188,212,0.5) 0%, transparent 50%)
+                `;
+            }
+        }
+
+        function generateClouds(name) {
+            const opacity = name.includes('gas') ? 0.4 : 0.6;
+            return `
+                radial-gradient(circle at ${r(20,80)}% ${r(20,80)}%, rgba(255,255,255,${opacity}) 0%, transparent 20%),
+                radial-gradient(circle at ${r(30,70)}% ${r(30,70)}%, rgba(255,255,255,${opacity - 0.1}) 0%, transparent 25%),
+                radial-gradient(circle at ${r(40,60)}% ${r(40,60)}%, rgba(255,255,255,${opacity + 0.1}) 0%, transparent 30%),
+                repeating-linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 5%, transparent 10%)
+            `;
+        }
+
+        function generateRingGradient(name) {
+            const colors = {
+                'gas-giant': 'conic-gradient(from 0deg, rgba(255,193,7,0.6), rgba(255,152,0,0.4), rgba(255,193,7,0.6))',
+                'ringed-gas': 'conic-gradient(from 0deg, rgba(156,39,176,0.6), rgba(103,58,183,0.4), rgba(156,39,176,0.6))',
+                'exotic': 'conic-gradient(from 0deg, rgba(233,30,99,0.7), rgba(156,39,176,0.5), rgba(233,30,99,0.7))'
+            };
+            return colors[name] || colors['gas-giant'];
+        }
+
+        function r(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+        const wishes = [
+            "2026 sana sağlık, huzur ve bol şans getirsin.",
+            "Yeni yılda hayallerin gerçek olsun.",
+            "2026'da sevgi dolu bir yıl seni bekliyor.",
+            "Sağlığın daim, mutluluğun bol olsun.",
+            "Bu yıl hedeflerine bir bir ulaşacaksın.",
+            "2026 bereketli ve huzurlu geçsin.",
+            "Sevdiklerinle nice güzel anlar biriktir.",
+            "Kalbinde umut, yüzünde gülümseme eksik olmasın.",
+            "Yeni yılda her şey gönlünce olsun.",
+            "2026 sana başarı ve mutluluk kapılarını açsın.",
+            "Hayatın her alanında şans seninle olsun.",
+            "Barış, sevgi ve anlayış dolu bir yıl olsun.",
+            "2026'da içindeki ışığı herkes görsün.",
+            "Maddi ve manevi zenginlikler seninle olsun.",
+            "Her yeni gün sana güzellikler getirsin.",
+            "2026 senin en güzel yılın olsun.",
+            "Kötü günler geride kalsın, önün hep aydınlık olsun.",
+            "Ailenle, sevdiklerinle sağlıklı bir yıl geçirmen dileğiyle.",
+            "2026'da hayallerine bir adım daha yaklaş.",
+            "Gönlünden geçen her şey gerçek olsun.",
+            "Mutluluk seninle daim olsun.",
+            "Yeni yılda yeni başlangıçlar seni bekliyor.",
+            "2026 sana bolca seyahat ve keşif getirsin.",
+            "İç huzurun hiç eksilmesin.",
+            "Başarılar seninle olsun, 2026 harika geçsin.",
+            "Sevgi her zaman yolunu aydınlatsın.",
+            "2026'da istediğin işe kavuş.",
+            "Hayatın sürprizleri seni hep mutlu etsin.",
+            "Sağlık her şeyin başı, 2026'da hep sağlıklı ol.",
+            "Paran bol, keyfin yerinde olsun.",
+            "2026 sana aşk getirsin.",
+            "Dostlukların çoğalsın, yalnızlık uzak olsun.",
+            "Her sabah uyanınca şükredecek bir şeyin olsun.",
+            "2026'da hayallerini gerçekleştirmek için güç bul.",
+            "Güzel haberler kapında sıralansın.",
+            "Kalbinde hep umut taşı.",
+            "2026 senin için dönüm noktası olsun.",
+            "Hayatın renkleri hiç solmasın.",
+            "Barış içinde bir yıl geçirmen dileğiyle.",
+            "2026'da yeni hobiler, yeni mutluluklar bul.",
+            "Sevdiğin insanlarla daha çok vakit geçir.",
+            "2026 sana finansal özgürlük getirsin.",
+            "İçindeki çocuk hiç büyümesin.",
+            "Her zorluğun üstesinden kolayca gel.",
+            "2026'da dünyayı gez, yeni kültürler tanı.",
+            "Mutlu anlar biriktir, unutulmaz hatıralar yarat.",
+            "Kendine her zaman değer ver.",
+            "2026 sana yeni arkadaşlıklar getirsin.",
+            "Hayatın akışı seni hep güzel yerlere taşısın.",
+            "Bol kahkaha, az gözyaşı olsun 2026'da.",
+            "İstediğin her şeye kolayca ulaş.",
+            "2026 senin için mucizelerle dolu olsun.",
+            "Korkuların yenilsin, cesaretin artsın.",
+            "Sevgi dolu bir kalp, huzurlu bir ruh senin olsun.",
+            "2026'da kariyerinde yüksel.",
+            "Hayatın her anı keyifli geçsin.",
+            "Güzel enerjin hiç eksilmesin.",
+            "2026 sana ilham versin.",
+            "Her zaman güvende ve mutlu ol.",
+            "Yeni yılda yeni fırsatlar seni bulsun.",
+            "2026'da kendini daha iyi tanı.",
+            "Hayat sana hep güzel sürprizler yapsın.",
+            "Sevdiklerin hep yanında olsun.",
+            "2026 sana bolluk ve bereket getirsin.",
+            "İçindeki gücü keşfet.",
+            "Her gün bir öncekinden daha güzel olsun.",
+            "2026'da aşkı bul ya da aşkını güçlendir.",
+            "Huzur evinin baş köşesinde otursun.",
+            "Başarıların herkesçe konuşulsun.",
+            "2026 sana dinginlik ve sakinlik getirsin.",
+            "Hayallerinin peşinden koşmaktan vazgeçme.",
+            "Her zaman gülümse, hayat güzel.",
+            "2026 senin en verimli yılın olsun.",
+            "Sevgiyle dolu kalbin hiç incinmesin.",
+            "Yeni yılda yeni hedefler, yeni zaferler.",
+            "2026 sana sağlıklı bir beden, dingin bir zihin versin.",
+            "Hayatın tadını çıkar, anın kıymetini bil.",
+            "Bol bol seyahat et, dünyayı gör.",
+            "2026'da maddi sıkıntılar geride kalsın.",
+            "Kendine her zaman şefkat göster.",
+            "Mutluluk senin gölgen olsun.",
+            "2026 sana yaratıcılık getirsin.",
+            "Her zaman umutla bak geleceğe.",
+            "Sevdiklerinle geçirdiğin her an altın değerinde olsun.",
+            "2026'da yeni başlangıçlar yap.",
+            "Hayat sana hep en güzelini versin.",
+            "İçindeki ateş hiç sönmesin.",
+            "2026 sana barış ve huzur getirsin.",
+            "Her zaman en iyisine layıksın.",
+            "Yeni yılda kalbin hep hafif olsun.",
+            "2026 senin için şans dolu bir yıl olsun.",
+            "Hayatın her alanında denge kur.",
+            "Sevgi kazanır, hep kazanacak.",
+            "2026'da kendini yeniden keşfet.",
+            "Güzel günler çok yakın.",
+            "Her zaman güçlü kal, pes etme.",
+            "2026 sana bolca gülümseme getirsin.",
+            "Hayatın anlamı senin elinde.",
+            "Yeni yılda her şey daha güzel olsun.",
+            "2026 senin en parlak yılın olsun.",
+            "Mutluluk kapını çalsın, içeri girsin.",
+            "Her zaman kalbinin sesini dinle.",
+            "2026 sana sağlık, aşk ve başarı getirsin."
+        ];
+
+        function makeWish(e) {
+            const x = e.clientX;
+            const y = e.clientY;
+            
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 900 + Math.random() * 300;
+            const tx = Math.cos(angle) * dist;
+            const ty = Math.sin(angle) * dist;
+
+            const box = document.createElement('div');
+            box.className = 'wish-container animate-wish';
+            box.style.left = x + 'px';
+            box.style.top = y + 'px';
+            box.style.setProperty('--tx', tx + 'px');
+            box.style.setProperty('--ty', ty + 'px');
+
+            const star = document.createElement('div');
+            star.className = 'wish-star';
+            const txt = document.createElement('div');
+            txt.className = 'wish-text';
+            txt.innerText = wishes[Math.floor(Math.random() * wishes.length)];
+
+            if (tx < 0) {
+                box.style.flexDirection = 'row-reverse';
+                txt.style.marginRight = '18px';
+                txt.style.marginLeft = '0';
+            }
+
+            box.appendChild(star);
+            box.appendChild(txt);
+            document.body.appendChild(box);
+
+            setTimeout(() => box.remove(), 4500);
+        }
+    </script>
+</body>
+</html>
