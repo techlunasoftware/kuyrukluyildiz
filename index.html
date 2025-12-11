@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TechLuna Kuyruklu Yıldızı</title>
+    <title>Living Planets</title>
     <style>
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
@@ -151,6 +151,22 @@
             color: rgba(255,255,255,0.5); pointer-events: none; 
             letter-spacing: 3px; font-size: 13px; text-transform: uppercase;
         }
+
+        @media (max-width: 768px) {
+            .planet-wrapper {
+                animation-duration: 12s; 
+            }
+            .planet-body {
+                box-shadow: 0 0 20px rgba(0,0,0,0.8); 
+            }
+            .wish-text {
+                font-size: 16px; 
+            }
+            .hint {
+                font-size: 11px;
+                bottom: 20px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -187,14 +203,14 @@
 
         const isMobile = window.innerWidth < 768;
         const positions = isMobile ? [
-            {x: 15, y: 12, size: 100},
-            {x: 75, y: 18, size: 120},
-            {x: 40, y: 35, size: 110},
-            {x: 80, y: 45, size: 95},
-            {x: 20, y: 55, size: 105},
-            {x: 60, y: 65, size: 115},
-            {x: 35, y: 78, size: 100},
-            {x: 85, y: 80, size: 90}
+            {x: 20, y: 10, size: 80},
+            {x: 70, y: 15, size: 100},
+            {x: 30, y: 30, size: 90},
+            {x: 75, y: 40, size: 80},
+            {x: 15, y: 50, size: 95},
+            {x: 65, y: 60, size: 85},
+            {x: 40, y: 75, size: 90},
+            {x: 80, y: 80, size: 75}
         ] : [
             {x: 8,  y: 15, size: 140},
             {x: 28, y: 12, size: 160},
@@ -249,6 +265,7 @@
             atmosphere.className = 'layer-atmosphere';
             atmosphere.style.setProperty('--glow', type.glow);
             body.appendChild(atmosphere);
+
             wrapper.appendChild(body);
 
             if (type.hasRing) {
@@ -338,6 +355,7 @@
         }
 
         function r(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
         const wishes = [
             "2026 sana sağlık, huzur ve bol şans getirsin.",
             "Yeni yılda hayallerin gerçek olsun.",
@@ -445,8 +463,8 @@
         ];
 
         function makeWish(e) {
-            const x = e.clientX;
-            const y = e.clientY;
+            const x = e.clientX || e.touches[0].clientX;
+            const y = e.clientY || e.touches[0].clientY;
             
             const angle = Math.random() * Math.PI * 2;
             const dist = 900 + Math.random() * 300;
